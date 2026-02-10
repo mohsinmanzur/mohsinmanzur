@@ -1,4 +1,4 @@
-<h2 align="left">👋 Hey, Mohsin here and thanks for landing on my page!</h2>
+<h2 align="left">👋 Hey, Mohsin here</h2>
 
 ###
 
@@ -10,10 +10,10 @@
 
 ###
 
-<img src="https://raw.githubusercontent.com/mohsinmanzur/mohsinmanzur/output/snake.svg" alt="Snake animation" />
+<img src ="https://raw.githubusercontent.com/platane/snk/output/github-contribution-grid-snake-dark.svg" alt="Snake Animation" >
+<!--<img src="https://raw.githubusercontent.com/mohsinmanzur/mohsinmanzur/output/snake.svg" alt="Snake animation" />-->
 
 ###
-
 <h2 align="left">💻 My Tech Stacks</h2>
 
 ###
@@ -53,6 +53,8 @@
   <img width="12" />
   <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white&style=for-the-badge" height="40" alt="docker logo"  />
 </div>
+
+###
 
 ###
 
