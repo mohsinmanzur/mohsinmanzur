@@ -18,7 +18,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none';
+    'inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base rounded-lg font-semibold transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap';
 
   const variantStyles = {
     primary:

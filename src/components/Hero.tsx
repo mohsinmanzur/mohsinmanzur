@@ -72,7 +72,7 @@ export default function Hero() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Button variant="primary" href="mailto:mohsinmanzoor32@gmail.com">
               <Mail className="w-4 h-4" />
               <span>Contact Me</span>
