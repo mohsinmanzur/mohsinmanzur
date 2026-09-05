@@ -1,42 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  /* Color Placeholders (User will supply custom palette) */
-  --background: #ffffff;
-  --foreground: #09090b;
-  --color-primary: #2563eb;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f4f4f5;
-  --color-secondary-foreground: #18181b;
-  --color-accent: #f4f4f5;
-  --color-accent-foreground: #18181b;
-  --color-muted: #71717a;
-  --color-border: #e4e4e7;
+  --primary: #BD0A0A;
+  --secondary: #01016F;
+  --text: #181A17;
+  --text-grey: #767676;
+  --background: #FAF9F5;
+  --card: #FFFFFF;
 
-  /* Font Family Placeholders (User will supply custom font family) */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-heading: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-primary: var(--font-ibm-sans), 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-secondary: var(--font-ibm-mono), 'IBM Plex Mono', SFMono-Regular, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #f4f4f5;
-    --color-primary: #3b82f6;
-    --color-primary-foreground: #ffffff;
-    --color-secondary: #27272a;
-    --color-secondary-foreground: #fafafa;
-    --color-accent: #27272a;
-    --color-accent-foreground: #fafafa;
-    --color-muted: #a1a1aa;
-    --color-border: #27272a;
-  }
+@theme {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-text: var(--text);
+  --color-text-grey: var(--text-grey);
+  --color-background: var(--background);
+  --color-card: var(--card);
+
+  --font-primary: var(--font-primary);
+  --font-secondary: var(--font-secondary);
 }
 
 body {
   background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  color: var(--text);
+  font-family: var(--font-primary);
   min-height: 100vh;
 }

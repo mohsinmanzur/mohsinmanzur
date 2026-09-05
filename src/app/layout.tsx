@@ -1,32 +1,24 @@
-import type { Metadata, Viewport } from "next";
-import StoreProvider from "@/providers/StoreProvider";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
+import './globals.css';
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-};
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ibm-sans',
+  display: 'swap',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-ibm-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: {
-    default: "Portfolio | Personal Portfolio & Showcase",
-    template: "%s | Portfolio",
-  },
-  description: "Modern personal portfolio showcasing projects, experience, technical skills, and achievements.",
-  keywords: ["Portfolio", "Developer", "Software Engineer", "Full Stack", "Projects"],
-  authors: [{ name: "Developer" }],
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "/",
-    siteName: "Portfolio",
-    title: "Portfolio | Personal Portfolio & Showcase",
-    description: "Modern personal portfolio showcasing projects, experience, and technical skills.",
-  },
+  title: 'Mohsin Manzoor | AI Software Developer',
+  description: 'Portfolio',
 };
 
 export default function RootLayout({
@@ -35,10 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full scroll-smooth antialiased">
-      <body className="min-h-full flex flex-col">
-        <StoreProvider>{children}</StoreProvider>
-      </body>
+    <html lang="en" className={`${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
