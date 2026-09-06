@@ -45,7 +45,7 @@ export default function Hero() {
   }, [displayText, isDeleting, roleIndex]);
 
   return (
-    <section className="min-h-screen flex items-center justify-center py-10 px-6 sm:px-8 lg:px-16">
+    <section id="home" className="flex items-center justify-center px-6 sm:px-8 lg:pl-16 lg:pr-44">
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Left Column: Bio & Calls to Action */}
         <div className="flex flex-col items-start space-y-6">
@@ -134,7 +134,15 @@ export default function Hero() {
         </div>
 
         {/* Right Column: Hero Image with Decorative Offset Border */}
-        <div className="relative w-full max-w-sm sm:max-w-md mx-auto">
+        <div
+          className="relative isolate w-full max-w-sm sm:max-w-md mx-auto
+            before:content-[''] before:absolute before:bottom-[10px] before:left-[5px] before:z-[-1] before:h-[10px] before:w-[40%]
+            before:shadow-[0_5px_14px_rgba(0,0,0,0.4)] before:[transform:skew(-5deg)_rotate(-5deg)] before:transition-all before:duration-300 before:ease-in-out
+            after:content-[''] after:absolute after:bottom-[10px] after:right-[5px] after:z-[-1] after:h-[10px] after:w-[40%]
+            after:shadow-[0_5px_14px_rgba(0,0,0,0.4)] after:[transform:skew(5deg)_rotate(5deg)] after:transition-all after:duration-300 after:ease-in-out
+            hover:before:left-[15px] hover:before:shadow-[0_5px_14px_rgba(0,0,0,0.7)]
+            hover:after:right-[15px] hover:after:shadow-[0_5px_14px_rgba(0,0,0,0.7)]"
+        >
           {/* Offset Accent Border Frame (protruding bottom-right like reference) */}
           <div
             className="absolute top-4 left-4 w-full h-full rounded-2xl border-2 z-0"
@@ -142,7 +150,7 @@ export default function Hero() {
           />
 
           {/* Profile Image Card */}
-          <div className="relative z-10 w-full aspect-[3/4] rounded-2xl bg-card border border-neutral-200/90 shadow-md overflow-hidden">
+          <div className="relative z-10 w-full aspect-[3/4] rounded-2xl bg-card shadow-md overflow-hidden">
             <Image
               src={mohsinImg}
               alt="Mohsin Manzoor"
