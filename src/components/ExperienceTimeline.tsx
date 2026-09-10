@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Briefcase, Code2, Rocket } from 'lucide-react';
 import type { Experience as ExperienceRow } from '@/lib/db/types';
 
@@ -35,6 +35,7 @@ interface YearTick {
 interface PopupState {
   entry: ExperienceEntry;
   left: number;
+  arrowLeft: number;
   placeAbove: boolean;
   vertical: { top: number } | { bottom: number };
 }
@@ -52,10 +53,11 @@ const POPUP_GAP = 10;
 // January of the earliest entry's year), not an ordinal slot — so two roles
 // a month apart sit close together, and two a year apart sit far apart.
 const START_X = 100;
-const PIXELS_PER_MONTH = 60;
+const PIXELS_PER_MONTH = 100;
 const PRESENT_GAP_MONTHS = 1.5;
 const ANCHOR_TO_NODE_OFFSET = 45;
 const STAGE_RIGHT_PADDING = 140;
+const MOBILE_RIGHT_PADDING = 120;
 
 function monthIndex(iso: string): number {
   const d = new Date(`${iso}T00:00:00`);
@@ -139,7 +141,7 @@ function buildLayout(rows: ExperienceRow[]): Layout {
       id: String(row.id),
       x: anchorX + ANCHOR_TO_NODE_OFFSET,
       anchorX,
-      dir: i % 2 === 0 ? 'below' : 'above',
+      dir: (regularRows.length - 1 - i) % 2 === 0 ? 'above' : 'below',
       color: rampColor(i / Math.max(regularRows.length, 1)),
       date: `${monthYear(row.startDate)} – ${row.endDate ? monthYear(row.endDate) : 'Present'}`,
       role: row.role,
@@ -186,9 +188,10 @@ interface NodeProps {
   isActive: boolean;
   onEnter: (entry: ExperienceEntry, circle: HTMLDivElement, placeAbove: boolean) => void;
   onLeave: () => void;
+  onClick: (entry: ExperienceEntry, circle: HTMLDivElement, placeAbove: boolean) => void;
 }
 
-function ExperienceNode({ entry, isCurrent, isActive, onEnter, onLeave }: NodeProps) {
+function ExperienceNode({ entry, isCurrent, isActive, onEnter, onLeave, onClick }: NodeProps) {
   const y = isCurrent ? SPINE_Y : entry.dir === 'above' ? ABOVE_Y : BELOW_Y;
   const radius = isCurrent ? 44 : 34;
   const diameter = radius * 2;
@@ -213,10 +216,12 @@ function ExperienceNode({ entry, isCurrent, isActive, onEnter, onLeave }: NodePr
         role="button"
         tabIndex={0}
         aria-label={`${entry.role} at ${entry.company}, ${entry.date}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(entry, e.currentTarget, placeAbove);
+        }}
         onMouseEnter={(e) => onEnter(entry, e.currentTarget, placeAbove)}
         onMouseLeave={onLeave}
-        onFocus={(e) => onEnter(entry, e.currentTarget, placeAbove)}
-        onBlur={onLeave}
         className="relative z-[2] flex cursor-pointer items-center justify-center rounded-full text-white shadow-[0_10px_22px_-14px_rgba(24,26,23,0.55)] outline-none transition-transform duration-300 ease-[cubic-bezier(0.22,0.61,0.36,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
         style={{
           width: diameter,
@@ -239,6 +244,17 @@ function ExperienceNode({ entry, isCurrent, isActive, onEnter, onLeave }: NodePr
         <span className={`block whitespace-nowrap ${isActive ? 'text-primary' : 'text-text'}`}>{entry.role}</span>
         {entry.company}
       </div>
+
+      {isCurrent && (
+        <div
+          className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap font-mono text-[11.5px] font-semibold text-text-grey sm:hidden"
+          style={{
+            marginTop: 14 + (isActive ? radius * 0.3 : 0),
+          }}
+        >
+          Present
+        </div>
+      )}
     </div>
   );
 }
@@ -264,42 +280,96 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
   const [popup, setPopup] = useState<PopupState | null>(null);
   const [atEnd, setAtEnd] = useState(false);
 
-  // Land on the current/"Present" node by default, since that's the most
-  // relevant entry, then track whether there's still more timeline to the
-  // right — the left edge is the true start of the timeline, so it never
-  // gets a fade of its own.
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Position the last ("Present") node at the center of the screen by default.
+  // The earlier timeline can be revealed by dragging to the right.
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
-    scroller.scrollLeft = scroller.scrollWidth;
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      return mobile;
+    };
+
+    const mobile = checkMobile();
 
     const updateEdges = () => {
       setAtEnd(scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1);
     };
 
+    if (mobile) {
+      scroller.scrollLeft = scroller.scrollWidth;
+    } else {
+      scroller.scrollLeft = Math.max(0, layout.lastNodeX - scroller.clientWidth / 2);
+    }
+
     updateEdges();
     scroller.addEventListener('scroll', updateEdges, { passive: true });
-    window.addEventListener('resize', updateEdges);
+
+    const handleResize = () => {
+      const mobileNow = checkMobile();
+      if (mobileNow) {
+        scroller.scrollLeft = scroller.scrollWidth;
+      }
+      updateEdges();
+    };
+
+    window.addEventListener('resize', handleResize);
     return () => {
       scroller.removeEventListener('scroll', updateEdges);
-      window.removeEventListener('resize', updateEdges);
+      window.removeEventListener('resize', handleResize);
     };
-  }, [layout.stageWidth]);
+  }, [layout.stageWidth, layout.lastNodeX, isMobile]);
+
+  useEffect(() => {
+    if (!popup) return;
+    const handleGlobalPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('[role="button"]')) {
+        return;
+      }
+      hidePopup();
+    };
+
+    window.addEventListener('pointerdown', handleGlobalPointerDown);
+    return () => {
+      window.removeEventListener('pointerdown', handleGlobalPointerDown);
+    };
+  }, [popup]);
 
   const showPopup = (entry: ExperienceEntry, circle: HTMLDivElement, placeAbove: boolean) => {
     const rect = circle.getBoundingClientRect();
+    const nodeCenterX = rect.left + rect.width / 2;
     const left = clamp(
-      rect.left + rect.width / 2 - POPUP_WIDTH / 2,
+      nodeCenterX - POPUP_WIDTH / 2,
       POPUP_MARGIN,
       window.innerWidth - POPUP_WIDTH - POPUP_MARGIN
     );
-    const vertical = placeAbove
+    const arrowLeft = clamp(nodeCenterX - left, 20, POPUP_WIDTH - 20);
+
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const shouldPlaceAbove = placeAbove
+      ? (spaceAbove >= 220 || spaceAbove >= spaceBelow)
+      : (spaceBelow < 220 && spaceAbove > spaceBelow);
+
+    const vertical = shouldPlaceAbove
       ? { bottom: window.innerHeight - rect.top + POPUP_GAP }
       : { top: rect.bottom + POPUP_GAP };
 
     setActiveId(entry.id);
-    setPopup({ entry, left, placeAbove, vertical });
+    setPopup({ entry, left, arrowLeft, placeAbove: shouldPlaceAbove, vertical });
+  };
+
+  const togglePopup = (entry: ExperienceEntry, circle: HTMLDivElement, placeAbove: boolean) => {
+    if (activeId === entry.id) {
+      hidePopup();
+    } else {
+      showPopup(entry, circle, placeAbove);
+    }
   };
 
   const hidePopup = () => {
@@ -340,103 +410,111 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
           onPointerUp={endDrag}
           onPointerLeave={endDrag}
           onPointerCancel={endDrag}
-          className="no-scrollbar w-full select-none overflow-x-auto overflow-y-hidden pr-6 [cursor:grab] active:[cursor:grabbing]"
+          className="no-scrollbar w-full select-none overflow-x-auto overflow-y-hidden [cursor:grab] active:[cursor:grabbing]"
         >
           <div className="flex" style={{ height: STAGE_HEIGHT }}>
-            <div className="relative flex-1">
-              <div
-                aria-hidden="true"
-                className="absolute inset-x-0"
-                style={{ top: SPINE_Y - 1, height: 2, background: 'rgba(24, 26, 23, 0.16)' }}
-              />
-            </div>
-
-            <div className="relative shrink-0" style={{ width: layout.stageWidth, height: STAGE_HEIGHT }}>
-              <svg
-                aria-hidden="true"
-                width={layout.stageWidth}
-                height={STAGE_HEIGHT}
-                viewBox={`0 0 ${layout.stageWidth} ${STAGE_HEIGHT}`}
-                className="absolute inset-0 overflow-visible"
-              >
-                {spineSegments.map((seg, i) => (
-                  <line
-                    key={i}
-                    x1={seg.x1}
-                    y1={SPINE_Y}
-                    x2={seg.x2}
-                    y2={SPINE_Y}
-                    stroke="rgba(24, 26, 23, 0.16)"
-                    strokeWidth={2}
-                  />
-                ))}
-
-                {uniqueAnchors.map((anchorX) => (
-                  <circle key={anchorX} cx={anchorX} cy={SPINE_Y} r={4} fill="rgba(24, 26, 23, 0.16)" />
-                ))}
-
-                {layout.experiences.map((entry) => {
-                  const y = entry.dir === 'above' ? ABOVE_Y : BELOW_Y;
-                  return (
-                    <line
-                      key={entry.id}
-                      x1={entry.anchorX}
-                      y1={SPINE_Y}
-                      x2={entry.x}
-                      y2={y}
-                      stroke="rgba(24, 26, 23, 0.28)"
-                      strokeWidth={1.5}
-                      strokeDasharray="2 6"
-                      strokeLinecap="round"
-                    />
-                  );
-                })}
-              </svg>
-
-              {layout.years.map((year) => (
+            {(() => {
+              const currentStageWidth = isMobile ? layout.lastNodeX + MOBILE_RIGHT_PADDING : layout.stageWidth;
+              return (
                 <div
-                  key={year.label}
-                  className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: year.x, top: SPINE_Y }}
+                  className="relative shrink-0 overflow-hidden sm:overflow-visible"
+                  style={{ width: currentStageWidth, height: STAGE_HEIGHT }}
                 >
-                  <span className="whitespace-nowrap bg-background px-1.5 font-mono text-[11.5px] font-semibold text-text-grey">
-                    {year.label}
-                  </span>
+                  <svg
+                    aria-hidden="true"
+                    width={currentStageWidth}
+                    height={STAGE_HEIGHT}
+                    viewBox={`0 0 ${currentStageWidth} ${STAGE_HEIGHT}`}
+                    className="absolute inset-0 overflow-visible"
+                  >
+                    {spineSegments.map((seg, i) => (
+                      <line
+                        key={i}
+                        x1={seg.x1}
+                        y1={SPINE_Y}
+                        x2={seg.x2}
+                        y2={SPINE_Y}
+                        stroke="rgba(24, 26, 23, 0.16)"
+                        strokeWidth={2}
+                      />
+                    ))}
+
+                    {uniqueAnchors.map((anchorX) => (
+                      <circle key={anchorX} cx={anchorX} cy={SPINE_Y} r={4} fill="rgba(24, 26, 23, 0.16)" />
+                    ))}
+
+                    {layout.experiences.map((entry) => {
+                      const y = entry.dir === 'above' ? ABOVE_Y : BELOW_Y;
+                      return (
+                        <line
+                          key={entry.id}
+                          x1={entry.anchorX}
+                          y1={SPINE_Y}
+                          x2={entry.x}
+                          y2={y}
+                          stroke="rgba(24, 26, 23, 0.28)"
+                          strokeWidth={1.5}
+                          strokeDasharray="2 6"
+                          strokeLinecap="round"
+                        />
+                      );
+                    })}
+                  </svg>
+
+                  {layout.years.map((year) => (
+                    <div
+                      key={year.label}
+                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+                      style={{ left: year.x, top: SPINE_Y }}
+                    >
+                      <span className="whitespace-nowrap bg-background px-1.5 font-mono text-[11.5px] font-semibold text-text-grey">
+                        {year.label}
+                      </span>
+                    </div>
+                  ))}
+
+                  <div
+                    className="pointer-events-none absolute hidden -translate-y-1/2 sm:block"
+                    style={{ left: layout.presentLabel.x, top: SPINE_Y }}
+                  >
+                    <span className="whitespace-nowrap font-mono text-[11.5px] font-semibold text-text-grey">
+                      {layout.presentLabel.label}
+                    </span>
+                  </div>
+
+                  {layout.experiences.map((entry) => (
+                    <ExperienceNode
+                      key={entry.id}
+                      entry={entry}
+                      isCurrent={false}
+                      isActive={activeId === entry.id}
+                      onEnter={showPopup}
+                      onLeave={hidePopup}
+                      onClick={togglePopup}
+                    />
+                  ))}
+
+                  {layout.current && (
+                    <ExperienceNode
+                      entry={layout.current}
+                      isCurrent
+                      isActive={activeId === layout.current.id}
+                      onEnter={showPopup}
+                      onLeave={hidePopup}
+                      onClick={togglePopup}
+                    />
+                  )}
                 </div>
-              ))}
+              );
+            })()}
 
+            {!isMobile && (
               <div
-                className="pointer-events-none absolute -translate-y-1/2"
-                style={{ left: layout.presentLabel.x, top: SPINE_Y }}
-              >
-                <span className="whitespace-nowrap font-mono text-[11.5px] font-semibold text-text-grey">
-                  {layout.presentLabel.label}
-                </span>
-              </div>
-
-              {layout.experiences.map((entry) => (
-                <ExperienceNode
-                  key={entry.id}
-                  entry={entry}
-                  isCurrent={false}
-                  isActive={activeId === entry.id}
-                  onEnter={showPopup}
-                  onLeave={hidePopup}
-                />
-              ))}
-
-              {layout.current && (
-                <ExperienceNode
-                  entry={layout.current}
-                  isCurrent
-                  isActive={activeId === layout.current.id}
-                  onEnter={showPopup}
-                  onLeave={hidePopup}
-                />
-              )}
-            </div>
-
-            <div aria-hidden="true" className="flex-1" />
+                aria-hidden="true"
+                className="shrink-0 hidden sm:block"
+                style={{ width: `max(0px, calc(50vw - ${layout.stageWidth - layout.lastNodeX}px))` }}
+              />
+            )}
           </div>
         </div>
 
@@ -475,21 +553,23 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
               at the card's own edge) both are white, so the join disappears. */}
           <div
             aria-hidden="true"
-            className="absolute left-1/2 h-0 w-0 -translate-x-1/2 border-x-[9px] border-x-transparent"
-            style={
-              popup.placeAbove
+            className="absolute h-0 w-0 -translate-x-1/2 border-x-[9px] border-x-transparent"
+            style={{
+              left: popup.arrowLeft,
+              ...(popup.placeAbove
                 ? { bottom: -10, borderTop: '10px solid #fff' }
-                : { top: -10, borderBottom: '10px solid #fff' }
-            }
+                : { top: -10, borderBottom: '10px solid #fff' }),
+            }}
           />
           <div
             aria-hidden="true"
-            className="absolute left-1/2 h-0 w-0 -translate-x-1/2 border-x-[7px] border-x-transparent"
-            style={
-              popup.placeAbove
+            className="absolute h-0 w-0 -translate-x-1/2 border-x-[7px] border-x-transparent"
+            style={{
+              left: popup.arrowLeft,
+              ...(popup.placeAbove
                 ? { bottom: -8, borderTop: `8px solid ${popup.entry.color}` }
-                : { top: -8, borderBottom: `8px solid ${popup.entry.color}` }
-            }
+                : { top: -8, borderBottom: `8px solid ${popup.entry.color}` }),
+            }}
           />
         </div>
       )}
