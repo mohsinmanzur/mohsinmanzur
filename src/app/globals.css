@@ -51,13 +51,29 @@ body {
 }
 
 @keyframes xp-ring-spin {
-  from { opacity: 0.8; transform: translate(-50%, -50%) scale(1.5) rotate(0deg); }
-  to   { opacity: 0.8; transform: translate(-50%, -50%) scale(1.5) rotate(360deg); }
+  from {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+  }
+
+  to {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.5) rotate(360deg);
+  }
 }
 
 @keyframes xp-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.55; }
-  50% { transform: scale(1.12); opacity: 0.15; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 0.15;
+  }
 }
 
 .xp-ring {
@@ -91,6 +107,7 @@ body {
     opacity: 0.8;
     transform: translate(-50%, -50%) scale(1.5);
   }
+
   .xp-pulse-ring {
     animation: none;
   }

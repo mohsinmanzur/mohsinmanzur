@@ -6,15 +6,13 @@ const sections = [
   { id: 'home', label: 'Home' },
   { id: 'experience', label: 'Experience' },
   { id: 'skills', label: 'Skills' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'contact', label: 'Contact' },
 ];
 
 const MINOR_TICKS_PER_GAP = 3;
 const TICK_GLOW_RADIUS = 0.4;
 
-const INACTIVE_TICK = { r: 229, g: 231, b: 235, a: 0.8 };
-const ACTIVE_TICK = { r: 118, g: 118, b: 118, a: 1 };
+const INACTIVE_TICK = { r: 118, g: 118, b: 118, a: 1 };
+const ACTIVE_TICK = { r: 24, g: 26, b: 23, a: 1 };
 
 function lerp(from: number, to: number, t: number) {
   return from + (to - from) * t;
@@ -24,11 +22,14 @@ function clamp01(value: number) {
   return Math.max(0, Math.min(1, value));
 }
 
+const POP_RADIUS = 1.4;
+
 function popAmount(distance: number) {
   if (distance <= 0) return 38;
-  if (distance >= 2) return 0;
-  if (distance <= 1) return lerp(38, 18, distance);
-  return lerp(18, 0, distance - 1);
+  if (distance >= POP_RADIUS) return 0;
+  const t = distance / POP_RADIUS;
+  const smooth = 1 - t * t * (3 - 2 * t);
+  return 38 * smooth;
 }
 
 function tickColor(distance: number) {
@@ -151,7 +152,7 @@ export default function ScrollIndicator() {
     >
       <span
         aria-hidden="true"
-        className="absolute right-0 top-1 bottom-1 w-px bg-neutral-200/80"
+        className="absolute right-0 top-1 bottom-1 w-px bg-text-grey"
       />
       {sections.map((section, index) => {
         const distance = Math.abs(progress - index);
