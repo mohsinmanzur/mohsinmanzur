@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Briefcase, Code2, Rocket } from 'lucide-react';
 import type { Experience as ExperienceRow } from '@/lib/db/types';
+import HoverCard from '@/components/ui/hover-card';
 
 type Direction = 'above' | 'below';
 type ExperienceType = ExperienceRow['type'];
@@ -528,50 +529,13 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
       </div>
 
       {popup && (
-        <div
-          className="fixed z-50 w-[260px] rounded-xl border-2 border-white p-4 shadow-[0_20px_40px_-18px_rgba(24,26,23,0.5)]"
-          style={{ left: popup.left, background: popup.entry.color, ...popup.vertical }}
-        >
-          <p className="mb-1 font-mono text-[11px] uppercase tracking-wider text-white/75">{popup.entry.date}</p>
-          <h3 className="text-[15px] font-bold leading-tight text-white">{popup.entry.role}</h3>
-          <p className="mb-2 mt-0.5 text-[12.5px] text-white/75">{popup.entry.company}</p>
-          <p className="mb-2.5 text-[12.5px] leading-relaxed text-white/90">{popup.entry.desc}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {popup.entry.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/25 bg-white/15 px-2 py-0.5 font-mono text-[10.5px] text-white"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          {/* Border-color triangle (larger) and fill-color triangle (smaller,
-              same base line) stacked flush against the card's edge — a true
-              triangle, not a rotated square, so its flat base never overlaps
-              into the card's rectangle. Where the two bases coincide (right
-              at the card's own edge) both are white, so the join disappears. */}
-          <div
-            aria-hidden="true"
-            className="absolute h-0 w-0 -translate-x-1/2 border-x-[9px] border-x-transparent"
-            style={{
-              left: popup.arrowLeft,
-              ...(popup.placeAbove
-                ? { bottom: -10, borderTop: '10px solid #fff' }
-                : { top: -10, borderBottom: '10px solid #fff' }),
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="absolute h-0 w-0 -translate-x-1/2 border-x-[7px] border-x-transparent"
-            style={{
-              left: popup.arrowLeft,
-              ...(popup.placeAbove
-                ? { bottom: -8, borderTop: `8px solid ${popup.entry.color}` }
-                : { top: -8, borderBottom: `8px solid ${popup.entry.color}` }),
-            }}
-          />
-        </div>
+        <HoverCard
+          entry={popup.entry}
+          left={popup.left}
+          arrowLeft={popup.arrowLeft}
+          placeAbove={popup.placeAbove}
+          vertical={popup.vertical}
+        />
       )}
     </section>
   );

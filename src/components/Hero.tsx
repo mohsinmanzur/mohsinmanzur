@@ -7,6 +7,8 @@ import mohsinImg from '@/assets/Mohsin.jpg';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 
+import HoverCard from '@/components/ui/hover-card';
+
 const roles = [
   'AI Software Developer',
   'Full-Stack Engineer',
@@ -18,6 +20,18 @@ export default function Hero() {
   const [roleIndex, setRoleIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyEmail = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    navigator.clipboard.writeText('mohsinmanzoor32@gmail.com');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const currentFullText = roles[roleIndex];
@@ -74,10 +88,41 @@ export default function Hero() {
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Button variant={"default"} size={"lg"} render={<a href="mailto:mohsinmanzoor32@gmail.com" />}>
-              <span>Contact Me</span>
-              <Mail className="w-4 h-4" />
-            </Button>
+            <div
+              className="relative inline-flex"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
+              <Button
+                variant={"default"}
+                size={"lg"}
+                onClick={handleCopyEmail}
+                className="cursor-pointer"
+              >
+                <span>Contact Me</span>
+                <Mail className="w-4 h-4" />
+              </Button>
+
+              {isHovered && (
+                <HoverCard
+                  position="absolute"
+                  placeAbove={true}
+                  left="50%"
+                  arrowLeft="50%"
+                  vertical={{ bottom: 'calc(100% + 14px)' }}
+                  className="-translate-x-1/2 w-auto whitespace-nowrap px-4 py-2 text-center"
+                >
+                  <button
+                    type="button"
+                    onClick={handleCopyEmail}
+                    className="font-mono text-xs sm:text-sm font-semibold tracking-tight text-white cursor-pointer select-all outline-none transition-opacity hover:opacity-90"
+                    title="Click to copy email"
+                  >
+                    {copied ? 'Copied to clipboard!' : 'mohsinmanzoor32@gmail.com'}
+                  </button>
+                </HoverCard>
+              )}
+            </div>
 
             <Button
               variant={"outline"}
