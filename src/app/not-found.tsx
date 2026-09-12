@@ -1,5 +1,5 @@
 import { Home } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 export default function NotFound() {
   return (
@@ -25,7 +25,7 @@ export default function NotFound() {
       </p>
 
       <div className="mt-8">
-        <Button variant="primary" href="/">
+        <Button render={<a href="/" />}>
           <Home className="h-4 w-4" />
           <span>Back to Home</span>
         </Button>
