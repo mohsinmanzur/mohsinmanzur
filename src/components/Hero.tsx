@@ -33,6 +33,23 @@ export default function Hero() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleContactClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const isMobile =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768);
+
+    if (isMobile) {
+      window.location.href = 'mailto:mohsinmanzoor32@gmail.com';
+      return;
+    }
+
+    handleCopyEmail();
+  };
+
   useEffect(() => {
     const currentFullText = roles[roleIndex];
     let timer: NodeJS.Timeout;
@@ -96,7 +113,7 @@ export default function Hero() {
               <Button
                 variant={"default"}
                 size={"lg"}
-                onClick={handleCopyEmail}
+                onClick={handleContactClick}
                 className="cursor-pointer"
               >
                 <span>Contact Me</span>
