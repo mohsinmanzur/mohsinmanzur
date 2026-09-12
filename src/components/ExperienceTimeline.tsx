@@ -398,8 +398,8 @@ export default function ExperienceTimeline({ experiences }: ExperienceTimelinePr
   };
 
   return (
-    <section id="experience" className="flex flex-col justify-center gap-10">
-      <div className="mx-auto max-w-3xl px-6 text-center sm:px-8 lg:px-16">
+    <section id="experience" className="flex flex-col justify-center gap-10 mb-[60px]">
+      <div className="mx-auto max-w-3xl px-6 text-center sm:px-8 lg:px-16 pb-5">
         <h2 className="text-3xl font-bold text-text sm:text-4xl">Experience</h2>
       </div>
 
