@@ -3,6 +3,7 @@ import { projects, skills, experiences } from "./schema";
 import { eq } from "drizzle-orm";
 import type {
   Project,
+  NewProject,
   Skill,
   NewSkill,
   Experience,
@@ -10,9 +11,9 @@ import type {
 } from "./types";
 
 export interface IDatabaseService {
-  // Projects (table is currently id-only — populated later)
+  // Projects
   getProjects(): Promise<Project[]>;
-  createProject(): Promise<Project | null>;
+  createProject(data: NewProject): Promise<Project | null>;
   deleteProject(id: number): Promise<boolean>;
 
   // Skills
@@ -28,12 +29,12 @@ export interface IDatabaseService {
 export class NeonPostgresDatabaseService implements IDatabaseService {
   async getProjects(): Promise<Project[]> {
     if (!db) return [];
-    return await db.select().from(projects);
+    return await db.select().from(projects).orderBy(projects.id);
   }
 
-  async createProject(): Promise<Project | null> {
+  async createProject(data: NewProject): Promise<Project | null> {
     if (!db) return null;
-    const result = await db.insert(projects).values({}).returning();
+    const result = await db.insert(projects).values(data).returning();
     return result[0] ?? null;
   }
 

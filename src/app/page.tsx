@@ -1,6 +1,6 @@
 import Hero from '@/components/Hero';
 import Experience from '@/components/Experience';
-import Skills from '@/components/Skills';
+import Projects from '@/components/Projects';
 import ScrollIndicator from '@/components/ScrollIndicator';
 
 export default function HomePage() {
@@ -11,7 +11,7 @@ export default function HomePage() {
         <Hero />
       </div>
       <Experience />
-      <Skills />
+      <Projects />
     </main>
   );
 }

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 const sections = [
   { id: 'home', label: 'Home' },
   { id: 'experience', label: 'Experience' },
-  { id: 'skills', label: 'Skills' },
+  { id: 'projects', label: 'Projects' },
 ];
 
 const MINOR_TICKS_PER_GAP = 3;

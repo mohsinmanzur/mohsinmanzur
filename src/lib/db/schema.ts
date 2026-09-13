@@ -2,10 +2,22 @@ import { pgTable, pgEnum, serial, text, varchar, timestamp, boolean, jsonb, date
 
 export const experienceTypeEnum = pgEnum("experience_type", ["job", "project", "founder"]);
 
-// Empty for now — columns will be added once the Projects section is designed.
-// experiences.projectIds below references rows here by id.
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  tagline: text("tagline").notNull(),
+  primaryLink: text("primary_link"),
+  secondaryLink: text("secondary_link"),
+  logoUrl: text("logo_url"),
+  secondaryLogoUrl: text("secondary_logo_url"),
+  color: varchar("color", { length: 50 }),
+  techStack: jsonb("tech_stack").$type<string[]>().default([]).notNull(),
+  timeTaken: varchar("time_taken", { length: 100 }),
+  summary: text("summary").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const skills = pgTable("skills", {

@@ -144,6 +144,83 @@ body {
   .xp-pulse-ring {
     animation: none;
   }
+
+  .bubble-animated {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Bubble & Cloud Carousel Animations */
+@keyframes bubbleFloat1 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(3deg);
+  }
+}
+
+@keyframes bubbleFloat2 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(12px) rotate(-4deg);
+  }
+}
+
+@keyframes bubbleFloat3 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2.5deg);
+  }
+}
+
+@keyframes cloudDriftSlow {
+  0%, 100% {
+    transform: scale(1) translate(0px, 0px);
+  }
+  50% {
+    transform: scale(1.08) translate(14px, -10px);
+  }
+}
+
+.animate-bubble-float-1 {
+  animation: bubbleFloat1 6s ease-in-out infinite;
+}
+
+.animate-bubble-float-2 {
+  animation: bubbleFloat2 7.5s ease-in-out infinite;
+}
+
+.animate-bubble-float-3 {
+  animation: bubbleFloat3 8.5s ease-in-out infinite;
+}
+
+.animate-cloud-drift {
+  animation: cloudDriftSlow 14s ease-in-out infinite alternate;
+}
+
+@keyframes marquee-infinite {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-25%, 0, 0);
+  }
+}
+
+.animate-carousel-marquee {
+  animation: marquee-infinite var(--marquee-duration, 35s) linear infinite;
+  will-change: transform;
+}
+
+.animate-carousel-marquee:hover,
+.animate-carousel-marquee.is-paused {
+  animation-play-state: paused !important;
 }
 
 @theme inline {
