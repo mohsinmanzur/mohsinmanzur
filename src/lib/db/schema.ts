@@ -15,6 +15,7 @@ export const projects = pgTable("projects", {
   timeTaken: varchar("time_taken", { length: 100 }),
   summary: text("summary").notNull(),
   description: text("description"),
+  media: jsonb("media").$type<string[]>().default([]).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -11,9 +11,11 @@ interface AppleProjectsCarouselProps {
 export default function AppleProjectsCarousel({ projects }: AppleProjectsCarouselProps) {
   const cards: AppleCardType[] = projects.map((project) => {
     const brandColor = project.color || '#181A17';
+    const thumbnail = project.media?.find((url) => url.toLowerCase().includes('thumbnail'));
 
     return {
       src: project.logoUrl || '',
+      thumbnailUrl: thumbnail,
       title: project.name,
       category: project.timeTaken ? `${project.timeTaken} • Production` : 'Production System',
       isLogo: Boolean(project.logoUrl),

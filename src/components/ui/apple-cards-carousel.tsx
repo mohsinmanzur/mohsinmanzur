@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import Image, { ImageProps } from 'next/image';
 
@@ -10,6 +10,7 @@ interface CarouselProps {
 
 export type AppleCardType = {
   src: string;
+  thumbnailUrl?: string;
   title: string;
   category: string;
   isLogo?: boolean;
@@ -17,35 +18,172 @@ export type AppleCardType = {
 };
 
 export const Carousel = ({ items, speed = 35 }: CarouselProps) => {
-  const [isPaused, setIsPaused] = useState(false);
+  const [isGrabbing, setIsGrabbing] = useState(false);
 
-  // 4 repeated sets guarantee a continuous seamless loop without gaps across all screen sizes
-  const SET_COUNT = 4;
+  const SET_COUNT = 8;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const firstSetRef = useRef<HTMLDivElement>(null);
+
+  const singleSetWidthRef = useRef(0);
+  const x = useRef(0);
+  const isDragging = useRef(false);
+  const isHovered = useRef(false);
+  const lastPointerX = useRef(0);
+  const lastPointerTime = useRef(0);
+  const velocity = useRef(0);
+  const hasInitialized = useRef(false);
+
+  const wrap = (val: number, min: number, max: number) => {
+    const range = max - min;
+    return ((((val - min) % range) + range) % range) + min;
+  };
+
+  const updateSetWidth = () => {
+    if (firstSetRef.current) {
+      const width = firstSetRef.current.getBoundingClientRect().width;
+      if (width > 0) {
+        singleSetWidthRef.current = width;
+        if (!hasInitialized.current) {
+          x.current = -2 * width;
+          hasInitialized.current = true;
+          if (trackRef.current) {
+            trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
+          }
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    updateSetWidth();
+
+    if (!firstSetRef.current) return;
+    const observer = new ResizeObserver(() => {
+      updateSetWidth();
+    });
+    observer.observe(firstSetRef.current);
+    return () => observer.disconnect();
+  }, [items]);
+
+  useEffect(() => {
+    let rafId: number;
+    let lastTime: number | null = null;
+
+    const animate = (now: number) => {
+      if (lastTime === null) {
+        lastTime = now;
+      }
+      const dt = Math.min(now - lastTime, 64);
+      lastTime = now;
+
+      const W = singleSetWidthRef.current;
+      if (W > 0 && trackRef.current) {
+        if (!isDragging.current) {
+          if (Math.abs(velocity.current) > 0.02) {
+            x.current += velocity.current * dt;
+            velocity.current *= 0.92;
+            x.current = wrap(x.current, -3 * W, -2 * W);
+            trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
+          } else {
+            velocity.current = 0;
+            if (!isHovered.current) {
+              const autoSpeed = (W / speed) / 1000;
+              x.current -= autoSpeed * dt;
+              x.current = wrap(x.current, -3 * W, -2 * W);
+              trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
+            }
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(animate);
+    };
+
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [speed]);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    isDragging.current = true;
+    setIsGrabbing(true);
+    lastPointerX.current = e.clientX;
+    lastPointerTime.current = performance.now();
+    velocity.current = 0;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    const dx = e.clientX - lastPointerX.current;
+    const now = performance.now();
+    const dt = now - lastPointerTime.current;
+    if (dt > 0) {
+      const v = dx / dt;
+      velocity.current = 0.7 * v + 0.3 * velocity.current;
+    }
+    lastPointerX.current = e.clientX;
+    lastPointerTime.current = now;
+
+    const W = singleSetWidthRef.current;
+    x.current += dx;
+    if (W > 0 && trackRef.current) {
+      x.current = wrap(x.current, -3 * W, -2 * W);
+      trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    setIsGrabbing(false);
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {}
+  };
 
   return (
-    <div className="relative w-full overflow-hidden py-2">
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative w-full overflow-hidden py-2 select-none touch-pan-y',
+        isGrabbing ? 'cursor-grabbing' : 'cursor-grab'
+      )}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerEnter={() => {
+        isHovered.current = true;
+      }}
+      onPointerLeave={() => {
+        if (!isDragging.current) {
+          isHovered.current = false;
+        }
+      }}
+      onDragStart={(e) => e.preventDefault()}
+    >
       <div
-        className={cn(
-          'flex w-max animate-carousel-marquee',
-          isPaused && 'is-paused'
-        )}
-        style={{
-          ['--marquee-duration' as string]: `${speed}s`,
-          animationPlayState: isPaused ? 'paused' : 'running',
-        }}
-        onPointerEnter={() => setIsPaused(true)}
-        onPointerLeave={() => setIsPaused(false)}
-        onTouchStart={() => setIsPaused(true)}
-        onTouchEnd={() => setIsPaused(false)}
+        ref={trackRef}
+        className="flex w-max will-change-transform"
       >
         {Array.from({ length: SET_COUNT }).map((_, setIdx) => (
-          <div key={setIdx} className="flex shrink-0 gap-4 sm:gap-6 pr-4 sm:pr-6">
+          <div
+            key={setIdx}
+            ref={setIdx === 0 ? firstSetRef : undefined}
+            className="flex shrink-0 gap-4 sm:gap-6 pr-4 sm:pr-6"
+          >
             {items.map((item, itemIdx) => (
               <div key={`set-${setIdx}-item-${itemIdx}`} className="shrink-0">
                 {React.isValidElement(item)
                   ? React.cloneElement(item as React.ReactElement<{ key?: string }>, {
-                      key: `set-${setIdx}-${itemIdx}`,
-                    })
+                    key: `set-${setIdx}-${itemIdx}`,
+                  })
                   : item}
               </div>
             ))}
@@ -68,15 +206,23 @@ export const Card = ({
     <div className="group relative z-10 flex aspect-[9/16] w-64 sm:w-72 md:w-80 flex-col items-start justify-start overflow-hidden rounded-3xl border border-border/80 bg-neutral-950 p-6 transition-all duration-300 hover:-translate-y-1 text-left select-none">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-36 bg-gradient-to-b from-black/80 via-black/35 to-transparent" />
       <div className="relative z-40 p-2">
-        <p className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/80 drop-shadow-sm">
-          {card.category}
-        </p>
-        <p className="mt-2 text-xl sm:text-2xl md:text-3xl font-bold text-white [text-wrap:balance] drop-shadow-md">
+        <p
+          className="max-w-xs text-left text-xl sm:text-2xl md:text-3xl font-semibold [text-wrap:balance] text-white"
+          style={{ fontFamily: 'sans-serif' }}
+        >
           {card.title}
         </p>
       </div>
 
-      {card.src ? (
+      {card.thumbnailUrl ? (
+        <BlurImage
+          src={card.thumbnailUrl}
+          alt={card.title}
+          fill
+          sizes="(max-width: 640px) 256px, (max-width: 768px) 288px, 320px"
+          className="absolute inset-0 z-10 object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : card.src ? (
         card.isLogo ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center p-6 sm:p-8 bg-neutral-950/95 overflow-hidden">
             <div
@@ -91,6 +237,7 @@ export const Card = ({
                 src={card.src}
                 alt={card.title}
                 fill
+                sizes="(max-width: 640px) 200px, 220px"
                 className="max-h-[100px] object-contain drop-shadow-lg brightness-0 invert"
                 style={{ filter: 'brightness(0) invert(1)' }}
               />
@@ -101,6 +248,7 @@ export const Card = ({
             src={card.src}
             alt={card.title}
             fill
+            sizes="(max-width: 640px) 256px, (max-width: 768px) 288px, 320px"
             className="absolute inset-0 z-10 object-cover transition-transform duration-500 group-hover:scale-105"
           />
         )
@@ -118,6 +266,7 @@ export const BlurImage = ({
   className,
   alt,
   fill,
+  sizes,
   ...rest
 }: ImageProps) => {
   const [isLoading, setLoading] = useState(true);
@@ -133,6 +282,7 @@ export const BlurImage = ({
       width={!fill ? width : undefined}
       height={!fill ? height : undefined}
       fill={fill}
+      sizes={sizes || (fill ? '(max-width: 640px) 256px, (max-width: 768px) 288px, 320px' : undefined)}
       loading="lazy"
       alt={alt ? alt : 'Card thumbnail'}
       {...rest}

@@ -14,6 +14,7 @@ export interface IDatabaseService {
   // Projects
   getProjects(): Promise<Project[]>;
   createProject(data: NewProject): Promise<Project | null>;
+  updateProject(id: number, data: Partial<NewProject>): Promise<Project | null>;
   deleteProject(id: number): Promise<boolean>;
 
   // Skills
@@ -35,6 +36,12 @@ export class NeonPostgresDatabaseService implements IDatabaseService {
   async createProject(data: NewProject): Promise<Project | null> {
     if (!db) return null;
     const result = await db.insert(projects).values(data).returning();
+    return result[0] ?? null;
+  }
+
+  async updateProject(id: number, data: Partial<NewProject>): Promise<Project | null> {
+    if (!db) return null;
+    const result = await db.update(projects).set(data).where(eq(projects.id, id)).returning();
     return result[0] ?? null;
   }
 
