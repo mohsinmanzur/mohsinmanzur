@@ -17,123 +17,51 @@ export type AppleCardType = {
   color?: string;
 };
 
-export const Carousel = ({ items, speed = 35 }: CarouselProps) => {
+export const Carousel = ({ items }: CarouselProps) => {
   const [isGrabbing, setIsGrabbing] = useState(false);
-
-  const SET_COUNT = 8;
   const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const firstSetRef = useRef<HTMLDivElement>(null);
-
-  const singleSetWidthRef = useRef(0);
-  const x = useRef(0);
   const isDragging = useRef(false);
-  const isHovered = useRef(false);
+  const startX = useRef(0);
+  const startScrollLeft = useRef(0);
   const lastPointerX = useRef(0);
   const lastPointerTime = useRef(0);
   const velocity = useRef(0);
-  const hasInitialized = useRef(false);
-
-  const wrap = (val: number, min: number, max: number) => {
-    const range = max - min;
-    return ((((val - min) % range) + range) % range) + min;
-  };
-
-  const updateSetWidth = () => {
-    if (firstSetRef.current) {
-      const width = firstSetRef.current.getBoundingClientRect().width;
-      if (width > 0) {
-        singleSetWidthRef.current = width;
-        if (!hasInitialized.current) {
-          x.current = -2 * width;
-          hasInitialized.current = true;
-          if (trackRef.current) {
-            trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
-          }
-        }
-      }
-    }
-  };
+  const rafId = useRef<number | null>(null);
 
   useEffect(() => {
-    updateSetWidth();
-
-    if (!firstSetRef.current) return;
-    const observer = new ResizeObserver(() => {
-      updateSetWidth();
-    });
-    observer.observe(firstSetRef.current);
-    return () => observer.disconnect();
-  }, [items]);
-
-  useEffect(() => {
-    let rafId: number;
-    let lastTime: number | null = null;
-
-    const animate = (now: number) => {
-      if (lastTime === null) {
-        lastTime = now;
-      }
-      const dt = Math.min(now - lastTime, 64);
-      lastTime = now;
-
-      const W = singleSetWidthRef.current;
-      if (W > 0 && trackRef.current) {
-        if (!isDragging.current) {
-          if (Math.abs(velocity.current) > 0.02) {
-            x.current += velocity.current * dt;
-            velocity.current *= 0.92;
-            x.current = wrap(x.current, -3 * W, -2 * W);
-            trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
-          } else {
-            velocity.current = 0;
-            if (!isHovered.current) {
-              const autoSpeed = (W / speed) / 1000;
-              x.current -= autoSpeed * dt;
-              x.current = wrap(x.current, -3 * W, -2 * W);
-              trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
-            }
-          }
-        }
-      }
-
-      rafId = requestAnimationFrame(animate);
+    return () => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-
-    rafId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafId);
-  }, [speed]);
+  }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     isDragging.current = true;
     setIsGrabbing(true);
+    startX.current = e.clientX;
+    startScrollLeft.current = containerRef.current ? containerRef.current.scrollLeft : 0;
     lastPointerX.current = e.clientX;
     lastPointerTime.current = performance.now();
     velocity.current = 0;
+    if (rafId.current) cancelAnimationFrame(rafId.current);
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {}
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current) return;
-    const dx = e.clientX - lastPointerX.current;
+    if (!isDragging.current || !containerRef.current) return;
+    const dx = e.clientX - startX.current;
+    containerRef.current.scrollLeft = startScrollLeft.current - dx;
+
     const now = performance.now();
     const dt = now - lastPointerTime.current;
     if (dt > 0) {
-      const v = dx / dt;
+      const v = (e.clientX - lastPointerX.current) / dt;
       velocity.current = 0.7 * v + 0.3 * velocity.current;
     }
     lastPointerX.current = e.clientX;
     lastPointerTime.current = now;
-
-    const W = singleSetWidthRef.current;
-    x.current += dx;
-    if (W > 0 && trackRef.current) {
-      x.current = wrap(x.current, -3 * W, -2 * W);
-      trackRef.current.style.transform = `translate3d(${x.current}px, 0, 0)`;
-    }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -145,48 +73,44 @@ export const Carousel = ({ items, speed = 35 }: CarouselProps) => {
         e.currentTarget.releasePointerCapture(e.pointerId);
       }
     } catch {}
+
+    if (Math.abs(velocity.current) > 0.05 && containerRef.current) {
+      let lastTime = performance.now();
+      const step = (now: number) => {
+        const dt = Math.min(now - lastTime, 64);
+        lastTime = now;
+        if (!containerRef.current) return;
+
+        containerRef.current.scrollLeft -= velocity.current * dt;
+        velocity.current *= 0.92;
+
+        if (Math.abs(velocity.current) > 0.02) {
+          rafId.current = requestAnimationFrame(step);
+        } else {
+          velocity.current = 0;
+        }
+      };
+      rafId.current = requestAnimationFrame(step);
+    }
   };
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        'relative w-full overflow-hidden py-2 select-none touch-pan-y',
+        'relative w-full overflow-x-auto py-4 select-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
         isGrabbing ? 'cursor-grabbing' : 'cursor-grab'
       )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      onPointerEnter={() => {
-        isHovered.current = true;
-      }}
-      onPointerLeave={() => {
-        if (!isDragging.current) {
-          isHovered.current = false;
-        }
-      }}
       onDragStart={(e) => e.preventDefault()}
     >
-      <div
-        ref={trackRef}
-        className="flex w-max will-change-transform"
-      >
-        {Array.from({ length: SET_COUNT }).map((_, setIdx) => (
-          <div
-            key={setIdx}
-            ref={setIdx === 0 ? firstSetRef : undefined}
-            className="flex shrink-0 gap-4 sm:gap-6 pr-4 sm:pr-6"
-          >
-            {items.map((item, itemIdx) => (
-              <div key={`set-${setIdx}-item-${itemIdx}`} className="shrink-0">
-                {React.isValidElement(item)
-                  ? React.cloneElement(item as React.ReactElement<{ key?: string }>, {
-                    key: `set-${setIdx}-${itemIdx}`,
-                  })
-                  : item}
-              </div>
-            ))}
+      <div className="flex w-max gap-4 sm:gap-6 px-10">
+        {items.map((item, itemIdx) => (
+          <div key={`carousel-item-${itemIdx}`} className="shrink-0">
+            {item}
           </div>
         ))}
       </div>
@@ -204,7 +128,6 @@ export const Card = ({
 }) => {
   return (
     <div className="group relative z-10 flex aspect-[9/16] w-64 sm:w-72 md:w-80 flex-col items-start justify-start overflow-hidden rounded-3xl border border-border/80 bg-neutral-950 p-6 transition-all duration-300 hover:-translate-y-1 text-left select-none">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-36 bg-gradient-to-b from-black/80 via-black/35 to-transparent" />
       <div className="relative z-40 p-2">
         <p
           className="max-w-xs text-left text-xl sm:text-2xl md:text-3xl font-semibold [text-wrap:balance] text-white"

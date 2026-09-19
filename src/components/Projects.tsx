@@ -13,9 +13,6 @@ export default async function Projects() {
     >
       <div className="mx-auto max-w-3xl px-6 text-center pb-10">
         <h2 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">Projects</h2>
-        <p className="mt-3 text-base text-text-grey sm:text-lg">
-          Production systems, mobile applications, and platforms I&apos;ve engineered.
-        </p>
       </div>
 
       <AppleProjectsCarousel projects={activeProjects} />
