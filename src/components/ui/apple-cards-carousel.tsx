@@ -126,8 +126,13 @@ export const Card = ({
   index: number;
   layout?: boolean;
 }) => {
+  const backgroundColor = card.color || '#BD0A0A';
+
   return (
-    <div className="group relative z-10 flex aspect-[9/16] w-64 sm:w-72 md:w-80 flex-col items-start justify-start overflow-hidden rounded-3xl border border-border/80 bg-neutral-950 p-6 transition-all duration-300 hover:-translate-y-1 text-left select-none">
+    <div
+      className="group relative z-10 flex aspect-[9/16] w-64 sm:w-72 md:w-80 flex-col items-start justify-start overflow-hidden rounded-3xl border border-border/80 p-6 transition-all duration-300 hover:-translate-y-1 text-left select-none"
+      style={{ backgroundColor }}
+    >
       <div className="relative z-40 p-2">
         <p
           className="max-w-xs text-left text-xl sm:text-2xl md:text-3xl font-semibold [text-wrap:balance] text-white"
@@ -138,46 +143,18 @@ export const Card = ({
       </div>
 
       {card.thumbnailUrl ? (
-        <BlurImage
-          src={card.thumbnailUrl}
-          alt={card.title}
-          fill
-          sizes="(max-width: 640px) 256px, (max-width: 768px) 288px, 320px"
-          className="absolute inset-0 z-10 object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      ) : card.src ? (
-        card.isLogo ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center p-6 sm:p-8 bg-neutral-950/95 overflow-hidden">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 opacity-20 blur-3xl transition-opacity duration-500 group-hover:opacity-35"
-              style={{
-                background: 'radial-gradient(circle at center, var(--primary) 0%, transparent 70%)',
-              }}
+        <div className="absolute inset-0 z-10 pt-[60px]">
+          <div className="relative h-full w-full">
+            <BlurImage
+              src={card.thumbnailUrl}
+              alt={card.title}
+              fill
+              sizes="(max-width: 640px) 256px, (max-width: 768px) 288px, 320px"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="relative z-10 flex h-[100px] max-h-[100px] w-full max-w-[200px] sm:max-w-[220px] items-center justify-center transition-transform duration-500 group-hover:scale-105">
-              <Image
-                src={card.src}
-                alt={card.title}
-                fill
-                sizes="(max-width: 640px) 200px, 220px"
-                className="max-h-[100px] object-contain drop-shadow-lg brightness-0 invert"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
-            </div>
           </div>
-        ) : (
-          <BlurImage
-            src={card.src}
-            alt={card.title}
-            fill
-            sizes="(max-width: 640px) 256px, (max-width: 768px) 288px, 320px"
-            className="absolute inset-0 z-10 object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        )
-      ) : (
-        <div className="absolute inset-0 z-10 bg-gradient-to-br from-neutral-800 to-neutral-900" />
-      )}
+        </div>
+      ) : null}
     </div>
   );
 };

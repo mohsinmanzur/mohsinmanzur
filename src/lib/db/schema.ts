@@ -10,6 +10,7 @@ export const projects = pgTable("projects", {
   secondaryLink: text("secondary_link"),
   logoUrl: text("logo_url"),
   secondaryLogoUrl: text("secondary_logo_url"),
+  thumbnailUrl: text("thumbnail_url"),
   color: varchar("color", { length: 50 }),
   techStack: jsonb("tech_stack").$type<string[]>().default([]).notNull(),
   timeTaken: varchar("time_taken", { length: 100 }),
