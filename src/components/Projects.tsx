@@ -9,7 +9,7 @@ export default async function Projects() {
   return (
     <section
       id="projects"
-      className="flex w-full flex-col justify-center gap-6 mb-20 sm:mb-32 overflow-hidden"
+      className="flex w-full flex-col justify-center gap-6 overflow-hidden"
     >
       <div className="mx-auto max-w-3xl px-6 text-center pb-10">
         <h2 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">Projects</h2>

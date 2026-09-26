@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 
 import HoverCard from '@/components/ui/hover-card';
+import { personalLinks } from '@/lib/links';
 
 const roles = [
   'AI Software Developer',
@@ -28,7 +29,7 @@ export default function Hero() {
       e.preventDefault();
       e.stopPropagation();
     }
-    navigator.clipboard.writeText('mohsinmanzoor32@gmail.com');
+    navigator.clipboard.writeText(personalLinks.rawEmail);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -43,7 +44,7 @@ export default function Hero() {
       (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768);
 
     if (isMobile) {
-      window.location.href = 'mailto:mohsinmanzoor32@gmail.com';
+      window.location.href = personalLinks.email;
       return;
     }
 
@@ -135,7 +136,7 @@ export default function Hero() {
                     className="font-mono text-xs sm:text-sm font-semibold tracking-tight text-white cursor-pointer select-all outline-none transition-opacity hover:opacity-90"
                     title="Click to copy email"
                   >
-                    {copied ? 'Copied to clipboard!' : 'mohsinmanzoor32@gmail.com'}
+                    {copied ? 'Copied to clipboard!' : personalLinks.rawEmail}
                   </button>
                 </HoverCard>
               )}
@@ -146,7 +147,7 @@ export default function Hero() {
               size={"lg"}
               render={
                 <a
-                  href="https://docs.google.com/document/d/1L-79IDiN0WmxvK9mUevO-3x7iNYYjU0kq4Fq3eMaC34/edit?usp=sharing"
+                  href={personalLinks.cv}
                   target="_blank"
                   rel="noopener noreferrer"
                 />
@@ -166,7 +167,7 @@ export default function Hero() {
                 className="rounded-l-lg!"
                 render={
                   <a
-                    href="https://www.linkedin.com/in/mohsinmanzur/"
+                    href={personalLinks.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="LinkedIn"
@@ -183,7 +184,7 @@ export default function Hero() {
                 size="icon"
                 render={
                   <a
-                    href="https://github.com/mohsinmanzur"
+                    href={personalLinks.github}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="GitHub"
