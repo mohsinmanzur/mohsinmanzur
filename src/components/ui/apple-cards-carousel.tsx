@@ -35,6 +35,7 @@ export const Carousel = ({ items }: CarouselProps) => {
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
     if (e.button !== 0) return;
     isDragging.current = true;
     setIsGrabbing(true);
@@ -50,6 +51,7 @@ export const Carousel = ({ items }: CarouselProps) => {
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
     if (!isDragging.current || !containerRef.current) return;
     const dx = e.clientX - startX.current;
     containerRef.current.scrollLeft = startScrollLeft.current - dx;
@@ -65,6 +67,7 @@ export const Carousel = ({ items }: CarouselProps) => {
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
     if (!isDragging.current) return;
     isDragging.current = false;
     setIsGrabbing(false);
@@ -98,12 +101,13 @@ export const Carousel = ({ items }: CarouselProps) => {
     <div
       ref={containerRef}
       className={cn(
-        'relative w-full overflow-x-auto py-4 select-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
+        'no-scrollbar relative w-full overflow-x-auto overflow-y-hidden py-4 select-none',
         isGrabbing ? 'cursor-grabbing' : 'cursor-grab'
       )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onDragStart={(e) => e.preventDefault()}
     >
